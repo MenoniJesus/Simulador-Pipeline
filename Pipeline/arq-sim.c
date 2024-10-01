@@ -12,6 +12,7 @@ int vetorDeReg[8] = {0};
 int pcBusca = 0;
 int pcDecodificacao = -1;
 int pcExecucao = -1;
+int pc = 0;
 
 typedef struct Instrucao{
     uint16_t formato;
@@ -55,8 +56,8 @@ Instrucao decodificacao(uint16_t instrucao){
     return instrucoes;
 }
 
-void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao, int *vaiPular, int *pc){
-    *vaiPular = 1;
+void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao){
+    vaiPular = 1;
     switch (conjuntoInstrucao.formato){
         case 0:
             switch (conjuntoInstrucao.opcodeR){
@@ -183,15 +184,15 @@ void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao, int *vaiPular, int
             switch (conjuntoInstrucao.opcodeI){
                 case 0:
                     printf("JUMP\n");
-                    *pc = conjuntoInstrucao.imediato;
-                    *vaiPular = 0;
+                    pc = conjuntoInstrucao.imediato;
+                    vaiPular = 0;
                     printf("PULOUUU\n");
                     break;
                 case 1:
                     printf("JUMP_COND\n");
                     if(vetorDeReg[conjuntoInstrucao.registrador] == 1){
-                        *pc = conjuntoInstrucao.imediato;
-                        *vaiPular = 0;
+                        pc = conjuntoInstrucao.imediato;
+                        vaiPular = 0;
                         printf("PULOUUU\n");
                     }
                     printf("Resultado%d = %d\n ", conjuntoInstrucao.registrador, vetorDeReg[conjuntoInstrucao.registrador]);
@@ -223,9 +224,9 @@ void print(Instrucao conjuntoInstrucao, int pc, uint16_t instrucao){
     }
 }
 
-void pipeline(uint16_t *memoria, int *pc, int *vaiPular){
-    busca(memoria, *pc, &buscaInstrucao);
-    print(decodificacao(buscaInstrucao), *pc, buscaInstrucao);
+void pipeline(uint16_t *memoria){
+    busca(memoria, pc, &buscaInstrucao);
+    print(decodificacao(buscaInstrucao), pc, buscaInstrucao);
 
     if (pcDecodificacao != -1) {
         execucaoInstrucao = decodificacao(buscaInstrucao);
@@ -234,36 +235,33 @@ void pipeline(uint16_t *memoria, int *pc, int *vaiPular){
     }
 
     if (pcExecucao != -1) {
-        execucao(memoria, execucaoInstrucao, vaiPular, pc);
+        execucao(memoria, execucaoInstrucao);
         pcExecucao = -1; 
     }
 
-    pcDecodificacao = *pc;
+    pcDecodificacao = pc;
 
-    if (*vaiPular) {
-        (*pc)++;
+    if (vaiPular) {
+        pc++;
     }
 }
 
 int main (int argc, char **argv){
-	if (argc != 2) {
-		printf("usage: %s [bin_name]\n", argv[0]);
-		exit(1);
-	}
+    if (argc != 2) {
+        printf("usage: %s [bin_name]\n", argv[0]);
+        exit(1);
+    }
 
     uint16_t memoria[TAMANHO_DE_MEMORIA] = {0};
     load_binary_to_memory(argv[1], memoria, TAMANHO_DE_MEMORIA);
 
-	int pc = 0;
-    int vaiPular = 1;
-
-	while(estaRodando){
-		pipeline(memoria, &pc, &vaiPular);
+    while(estaRodando){
+        pipeline(memoria);
 
         if(pc >= TAMANHO_DE_MEMORIA){
             estaRodando = 0;
         }
-	}
+    }
 
     printf("----------------------\n");
     for(int i = 0; i < 8; i++){
@@ -274,10 +272,5 @@ int main (int argc, char **argv){
         printf("%d ", memoria[i]);
     }
     printf("\n");
-    printf("----------------------\n");
-    for(int i = 0; i < 256; i++){
-        printf("%d ", vetorPreditor[i]);
-    }
-    printf("\n");
-	return 0;
+    return 0;
 }
