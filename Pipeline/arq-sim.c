@@ -7,14 +7,14 @@
 #define TAMANHO_DE_MEMORIA 0x0100
 #define TAMANHO_DO_PREDITORDESVIO 0x0100
 
-int estaRodando = 1;
-int vaiPular = 1;
-int vetorDeReg[8] = {0};
+int pc = 0;
 int pcBusca = 0;
 int pcDecodificacao = -1;
 int pcExecucao = -1;
-int pc = 0;
+int estaRodando = 1;
+int vaiPular = 1;
 int executouPulo = 0;
+int vetorDeReg[8] = {0};
 
 typedef struct PreditorDeDesvio {
     int pc;
@@ -40,21 +40,21 @@ uint16_t buscaInstrucao = 0;
 Instrucao decodificaoInstrucao;
 Instrucao execucaoInstrucao;
 
-void print_binario(uint16_t value) {
-    for (int i = 15; i >= 0; i--) {
+void print_binario(uint16_t value){
+    for (int i = 15; i >= 0; i--){
         printf("%d", (value >> i) & 1);
     }
     printf("\n");
 }
 
-int randomInt(int min, int max) {
+int randomInt(int min, int max){
     return rand() % (max - min + 1) + min;
 }
 
-void atualizaPreditor(int pc, int pulou) {
+void atualizaPreditor(int pc, int pulou){
     int index = pc % TAMANHO_DO_PREDITORDESVIO;
     
-    if(vetorDoPreditorDesvio[index].pc != pc) {
+    if(vetorDoPreditorDesvio[index].pc != pc){
         vetorDoPreditorDesvio[index].pc = pc;
         vetorDoPreditorDesvio[index].vezesJump = 0;
         vetorDoPreditorDesvio[index].vezesExecutado = 0;
@@ -62,39 +62,39 @@ void atualizaPreditor(int pc, int pulou) {
     }
 
     vetorDoPreditorDesvio[index].vezesExecutado++;
-    if(pulou) {
+    if(pulou){
         vetorDoPreditorDesvio[index].vezesJump++;
     }
 
     int taxaDeJump = (vetorDoPreditorDesvio[index].vezesJump * 100) / vetorDoPreditorDesvio[index].vezesExecutado;
-    if(taxaDeJump == 0) {
+    if(taxaDeJump == 0){
         vetorDoPreditorDesvio[index].probabilidadeJump = 0;
-    } else if (taxaDeJump <= 25) {
+    } else if (taxaDeJump <= 25){
         vetorDoPreditorDesvio[index].probabilidadeJump = 1;
-    } else if (taxaDeJump <= 50) {
+    } else if (taxaDeJump <= 50){
         vetorDoPreditorDesvio[index].probabilidadeJump = 2;
     } else {
         vetorDoPreditorDesvio[index].probabilidadeJump = 3;
     }
 }
 
-void busca(uint16_t *memoria, int pc) {
+void busca(uint16_t *memoria, int pc){
     buscaInstrucao = memoria[pc];
     int index = pc % TAMANHO_DO_PREDITORDESVIO;
 
-    if(vetorDoPreditorDesvio[index].pc == pc) {
+    if(vetorDoPreditorDesvio[index].pc == pc){
         int num = randomInt(0, 100);
-        switch (vetorDoPreditorDesvio[index].probabilidadeJump) {
+        switch (vetorDoPreditorDesvio[index].probabilidadeJump){
             case 0:
                 break;
             case 1:
-                if(num < 25) {
+                if(num < 25){
                     pc = execucaoInstrucao.imediato;
                     executouPulo = 1;
                 }
                 break;
             case 2:
-                if(num < 50) {
+                if(num < 50){
                     pc = execucaoInstrucao.imediato;
                     executouPulo = 1;
                 }
@@ -107,15 +107,15 @@ void busca(uint16_t *memoria, int pc) {
     }
 }
 
-Instrucao decodificacao(uint16_t instrucao) {
+Instrucao decodificacao(uint16_t instrucao){
     Instrucao instrucoes;
     instrucoes.formato = extract_bits(instrucao, 15, 1);
-    if(instrucoes.formato == 0) {
+    if(instrucoes.formato == 0){
         instrucoes.opcodeR = extract_bits(instrucao, 9, 6);
         instrucoes.destino = extract_bits(instrucao, 6, 3);
         instrucoes.ope1 = extract_bits(instrucao, 3, 3);
         instrucoes.ope2 = extract_bits(instrucao, 0, 3);
-    } else if (instrucoes.formato == 1) {
+    } else if (instrucoes.formato == 1){
         instrucoes.opcodeI = extract_bits(instrucao, 13, 2);
         instrucoes.registrador = extract_bits(instrucao, 10, 3);
         instrucoes.imediato = extract_bits(instrucao, 0, 10);
@@ -123,11 +123,11 @@ Instrucao decodificacao(uint16_t instrucao) {
     return instrucoes;
 }
 
-void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao) {
+void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao){
     vaiPular = 1;
     int pulou = 0;
 
-switch (conjuntoInstrucao.formato){
+    switch (conjuntoInstrucao.formato){
         case 0:
             switch (conjuntoInstrucao.opcodeR){
                 case 0:
@@ -293,7 +293,7 @@ switch (conjuntoInstrucao.formato){
     }
 }
 
-void print(Instrucao conjuntoInstrucao, int pc, uint16_t instrucao) {
+void print(Instrucao conjuntoInstrucao, int pc, uint16_t instrucao){
     printf("----------------------\n");
     printf("%d\n", pc);
     print_binario(instrucao);
@@ -310,45 +310,28 @@ void print(Instrucao conjuntoInstrucao, int pc, uint16_t instrucao) {
     }
 }
 
-void print(Instrucao conjuntoInstrucao, int pc, uint16_t instrucao) {
-    printf("----------------------\n");
-    printf("%d\n", pc);
-    print_binario(instrucao);
-    printf("Formato: %d\n", conjuntoInstrucao.formato);
-    if (conjuntoInstrucao.formato == 0){
-        printf("Opcode: %d\n", conjuntoInstrucao.opcodeR);
-        printf("Destino: %d\n", conjuntoInstrucao.destino);
-        printf("Operando 1: %d\n", conjuntoInstrucao.ope1);
-        printf("Operando 2: %d\n", conjuntoInstrucao.ope2);
-    } else if (conjuntoInstrucao.formato == 1){
-        printf("Opcode: %d\n", conjuntoInstrucao.opcodeI);
-        printf("Registrador: %d\n", conjuntoInstrucao.registrador);
-        printf("Imediato: %d\n", conjuntoInstrucao.imediato);
-    }
-}
-
-void pipeline(uint16_t *memoria) {
+void pipeline(uint16_t *memoria){
     busca(memoria, pc);
     print(decodificacao(buscaInstrucao), pc, buscaInstrucao);
 
-    if(pcDecodificacao != -1) {
+    if(pcDecodificacao != -1){
         execucaoInstrucao = decodificacao(buscaInstrucao);
         pcExecucao = pcDecodificacao;
     }
 
-    if(pcExecucao != -1) {
+    if(pcExecucao != -1){
         execucao(memoria, execucaoInstrucao);
     }
 
     pcDecodificacao = pc;
 
-    if(vaiPular) {
+    if(vaiPular){
         pc++;
     }
 }
 
-int main(int argc, char **argv) {
-    if(argc != 2) {
+int main(int argc, char **argv){
+    if(argc != 2){
         printf("usage: %s [bin_name]\n", argv[0]);
         exit(1);
     }
@@ -358,21 +341,21 @@ int main(int argc, char **argv) {
 
     srand(time(NULL));
 
-    while (estaRodando) {
+    while (estaRodando){
         pipeline(memoria);
 
-        if(pc >= TAMANHO_DE_MEMORIA) {
+        if(pc >= TAMANHO_DE_MEMORIA){
             estaRodando = 0;
         }
     }
 
     printf("----------------------\n");
     printf("Registradores\n");
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 8; i++){
         printf("Registrador %d: %d\n", i, vetorDeReg[i]);
     }
     printf("----------------------\n");
-    for (int i = 0; i <= 100; i++) {
+    for (int i = 0; i <= 100; i++){
         printf("%d ", memoria[i]);
     }
     printf("\n");
