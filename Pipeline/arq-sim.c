@@ -5,10 +5,9 @@
 #include <time.h>
 #include "lib.h"
 #define TAMANHO_DE_MEMORIA 0x0100
-#define TAMANHO_DO_PREDITORDESVIO 0x0100
+#define TAMANHO_DO_PREDITORDESVIO 32
 
 int pc = 0;
-int pcBusca = 0;
 int pcDecodificacao = -1;
 int pcExecucao = -1;
 int estaRodando = 1;
@@ -280,15 +279,17 @@ void execucao(uint16_t *memoria, Instrucao conjuntoInstrucao){
 
     if(executouPulo == 0){
         if(pulou == 1){
-            pcBusca = execucaoInstrucao.imediato;
+            pc = execucaoInstrucao.imediato;
             pcDecodificacao = -1;
             pcExecucao = -1;
+            vaiPular = 0;
         }
     } else {
         if(pulou == 0){
-            pcBusca = pcExecucao + 1;
+            pc = pcExecucao + 1;
             pcDecodificacao = -1;
             pcExecucao = -1;
+            vaiPular = 0;
         }
     }
 }
@@ -359,5 +360,9 @@ int main(int argc, char **argv){
         printf("%d ", memoria[i]);
     }
     printf("\n");
+    printf("----------------------\n");
+    for (int i = 0; i < TAMANHO_DO_PREDITORDESVIO; i++){
+        printf("%d ", vetorDoPreditorDesvio[i].pc);
+    }
     return 0;
 }
