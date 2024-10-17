@@ -88,18 +88,18 @@ void busca(uint16_t *memoria, int pc){
                 break;
             case 1:
                 if(num < 25){
-                    pc = execucaoInstrucao.imediato;
+                    pc = extract_bits(buscaInstrucao, 0, 10);
                     executouPulo = 1;
                 }
                 break;
             case 2:
                 if(num < 50){
-                    pc = execucaoInstrucao.imediato;
+                    pc = extract_bits(buscaInstrucao, 0, 10);
                     executouPulo = 1;
                 }
                 break;
             case 3:
-                pc = execucaoInstrucao.imediato;
+                pc = extract_bits(buscaInstrucao, 0, 10);
                 executouPulo = 1;
                 break;
         }
@@ -312,17 +312,18 @@ void print(Instrucao conjuntoInstrucao, int pc, uint16_t instrucao){
 }
 
 void pipeline(uint16_t *memoria){
-    busca(memoria, pc);
-    print(decodificacao(buscaInstrucao), pc, buscaInstrucao);
+    if(pcExecucao != -1){
+        execucao(memoria, execucaoInstrucao);
+    }
+
 
     if(pcDecodificacao != -1){
         execucaoInstrucao = decodificacao(buscaInstrucao);
         pcExecucao = pcDecodificacao;
     }
 
-    if(pcExecucao != -1){
-        execucao(memoria, execucaoInstrucao);
-    }
+    busca(memoria, pc);
+    print(decodificacao(buscaInstrucao), pc, buscaInstrucao);
 
     pcDecodificacao = pc;
 
@@ -341,6 +342,13 @@ int main(int argc, char **argv){
     load_binary_to_memory(argv[1], memoria, TAMANHO_DE_MEMORIA);
 
     srand(time(NULL));
+
+    for(int i = 0; i < TAMANHO_DO_PREDITORDESVIO; i++){
+        vetorDoPreditorDesvio[i].pc = -1;
+        vetorDoPreditorDesvio[i].probabilidadeJump = 0;
+        vetorDoPreditorDesvio[i].vezesJump = 0;
+        vetorDoPreditorDesvio[i].vezesExecutado = 0;
+    }
 
     while (estaRodando){
         pipeline(memoria);
@@ -364,5 +372,6 @@ int main(int argc, char **argv){
     for (int i = 0; i < TAMANHO_DO_PREDITORDESVIO; i++){
         printf("%d ", vetorDoPreditorDesvio[i].pc);
     }
+    printf("\n");
     return 0;
 }
