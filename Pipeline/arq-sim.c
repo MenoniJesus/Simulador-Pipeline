@@ -4,8 +4,8 @@
 #include <assert.h>
 #include <time.h>
 #include "lib.h"
-#define TAMANHO_DE_MEMORIA 0x0100
-#define TAMANHO_DO_PREDITORDESVIO 32
+#define TAMANHO_DE_MEMORIA 512
+#define TAMANHO_DO_PREDITORDESVIO 64
 
 int pc = 0;
 int pcDecodificacao = -1;
@@ -316,15 +316,14 @@ void pipeline(uint16_t *memoria){
         execucao(memoria, execucaoInstrucao);
     }
 
-
     if(pcDecodificacao != -1){
         execucaoInstrucao = decodificacao(buscaInstrucao);
-        pcExecucao = pcDecodificacao;
     }
 
     busca(memoria, pc);
     print(decodificacao(buscaInstrucao), pc, buscaInstrucao);
 
+    pcExecucao = pcDecodificacao;
     pcDecodificacao = pc;
 
     if(vaiPular){
@@ -370,7 +369,8 @@ int main(int argc, char **argv){
     printf("\n");
     printf("----------------------\n");
     for (int i = 0; i < TAMANHO_DO_PREDITORDESVIO; i++){
-        printf("%d ", vetorDoPreditorDesvio[i].pc);
+        printf("%d-", vetorDoPreditorDesvio[i].pc);
+        printf("%d ", vetorDoPreditorDesvio[i].probabilidadeJump);
     }
     printf("\n");
     return 0;
